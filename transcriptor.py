@@ -1,7 +1,7 @@
+import os
 import assemblyai as aai
-from env import ASSEMBLYAI
 
-aai.settings.api_key = ASSEMBLYAI
+aai.settings.api_key = os.environ["ASSEMBLYAI_API_KEY"]
 transcriber = aai.Transcriber()
 
 def transcribe(file):

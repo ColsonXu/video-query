@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import tempfile
 from transcriptor import transcribe
@@ -5,9 +6,7 @@ from yt_caption import get_caption_from_youtube
 from embedding import create_embeddings, retrieve, reset_index
 from openai import OpenAI
 
-from env import OPENAI
-
-llm = OpenAI(api_key=OPENAI)
+llm = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
 st.title("Video Query")
 
@@ -81,14 +80,6 @@ def gpt(prompt):
     )
     return res.choices[0].message.content.strip()
 
-def reset_app():
-    # Reset or clear the variables in session_state
-    keys = list(st.session_state.keys())
-    for key in keys:
-        del st.session_state[key]
-    reset_index()
-    st.experimental_rerun()
-
 # Initialize chat history
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -118,5 +109,5 @@ if 'transcript' in st.session_state and st.session_state.transcript is not None:
             st.markdown("Error occured, please try again.")
             st.session_state.messages.append({"role": "error", "content": "Error occured, please try again."})
     
-    if st.button("Reset App"):
-        reset_app()
+    if st.button("Reset Index"):
+        reset_index()

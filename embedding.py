@@ -1,14 +1,13 @@
 import re
+import os
 from openai import OpenAI
 from pinecone import Pinecone, ServerlessSpec
 from tqdm.auto import tqdm
 from time import sleep
 import uuid  # To generate unique IDs for each chunk
 
-from env import OPENAI, PINECONE
-
-llm = OpenAI(api_key=OPENAI)
-pc = Pinecone(api_key=PINECONE)
+llm = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+pc = Pinecone(api_key=os.environ["PINECONE_API_KEY"])
 
 EMBED_MODEL = "text-embedding-3-small"
 
