@@ -1,0 +1,7 @@
+streamlit
+tempfile
+openai
+assemblyai
+youtube_transcript_api
+pinecone
+tqdm

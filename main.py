@@ -1,5 +1,4 @@
 import streamlit as st
-import numpy as np
 import tempfile
 from transcriptor import transcribe
 from yt_caption import get_caption_from_youtube
