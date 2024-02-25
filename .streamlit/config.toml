@@ -1,2 +1,6 @@
 [theme]
 base = "dark"
+primaryColor = "purple"
+
+[server]
+maxUploadSize = 1024
