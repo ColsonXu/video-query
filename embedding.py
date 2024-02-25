@@ -91,8 +91,10 @@ def _upsert(index, data):
         texts = [x['text'] for x in meta_batch]
 
         try:
+            print("creating embedding")
             res = llm.embeddings.create(input=texts, model=EMBED_MODEL)
         except:
+            print("exception")
             done = False
             while not done:
                 sleep(5)

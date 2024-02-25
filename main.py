@@ -8,7 +8,10 @@ from openai import OpenAI
 
 llm = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
-st.title("Video Query")
+st.set_page_config(layout="wide")
+st.title("vQuery")
+
+col1, col2 = st.columns(2)
 
 assemlyai_supported_file_ext = [
     '.3ga', '.webm', '.8svx', '.mts', '.m2ts', '.ts', '.aac', '.mov', '.ac3', '.mp2',
@@ -17,39 +20,37 @@ assemlyai_supported_file_ext = [
     '.oga', '.mogg', '.opus', '.qcp', '.tta', '.voc', '.wav', '.wma', '.wv'
 ]
 
-# st.session_state.transcript = """
-# Wow, what an audience. But if I'm being honest, I don't care what you think of my talk. I don't. I care what the Internet thinks of my talk because they're the ones who get it seen and get it shared. And I think that's where most people get it wrong. They're talking to you here instead of talking to you. Random person scrolling Facebook. Thanks for the quick. You see, back in 2009, we all had these weird little things called attention spans. Yeah, they're gone. They're gone. We killed them. They're dead. I'm trying to think of the last time I watched an 18 minutes TED talk. It's been years. Literally years. So if you're given a TEd talk, keep it quick. I'm doing mine in under a minute. I'm at 44 seconds right now. That means we got time for one final joke. Why are balloons so expensive? Inflation.
-# """
-
 # Radio button to select input type
 input_type = st.radio('Select input type:', ('YouTube URL', 'File Upload'))
 
 # Function to process text input
 def process_text_input():
     if 'transcript' not in st.session_state or st.session_state.transcript is None:
-        user_input = st.text_area("Enter YouTube URL here:")
-        if st.button('Submit'):
-            if user_input:
-                st.write("Processing YouTube Video...")
-                try:
-                    transcript = get_caption_from_youtube(user_input)
-                    st.session_state.transcript = transcript  # Store the transcript in session state
-                except:
-                    st.warning("Error occurred, please try again.")
-            else:
-                st.warning("Please enter some text.")
+        with col1:
+            user_input = st.text_area("Enter YouTube URL here:")
+            if st.button('Submit'):
+                if user_input:
+                    st.write("Video Transcript:")
+                    try:
+                        transcript = get_caption_from_youtube(user_input)
+                        st.session_state.transcript = transcript  # Store the transcript in session state
+                    except:
+                        st.warning("Error occurred, please try again.")
+                else:
+                    st.warning("Please enter some text.")
 
 # Function to process file upload
 def process_file_upload():
     if 'transcript' not in st.session_state or st.session_state.transcript is None:
-        uploaded_file = st.file_uploader("Upload an audio or video file.", type=assemlyai_supported_file_ext)
-        if uploaded_file is not None:
-            st.write("Generating Video Transcript...")
-            with tempfile.NamedTemporaryFile(delete=False, suffix=uploaded_file.name) as tmp_file:
-                tmp_file.write(uploaded_file.getvalue())
-                temp_file_path = tmp_file.name
-                transcript = transcribe(temp_file_path)
-                st.session_state.transcript = transcript  # Store the transcript in session state
+        with col1:
+            uploaded_file = st.file_uploader("Upload an audio or video file.", type=assemlyai_supported_file_ext)
+            if uploaded_file is not None:
+                st.write("Generating Video Transcript...")
+                with tempfile.NamedTemporaryFile(delete=False, suffix=uploaded_file.name) as tmp_file:
+                    tmp_file.write(uploaded_file.getvalue())
+                    temp_file_path = tmp_file.name
+                    transcript = transcribe(temp_file_path)
+                    st.session_state.transcript = transcript  # Store the transcript in session state
 
 
 # Display the appropriate widget based on the input type
@@ -85,29 +86,32 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 if 'transcript' in st.session_state and st.session_state.transcript is not None:
-    st.write(st.session_state.transcript)
+    with col1:
+        st.write(st.session_state.transcript)
+
     # Create embeddings for the transcript
     if 'embeddings_created' not in st.session_state:
         with st.spinner("Creating Embeddings..."):
             create_embeddings(st.session_state.transcript)
             st.session_state.embeddings_created = True
 
-    if prompt := st.chat_input("Ask me anything based on the transcript:"):
-        with st.chat_message("user"):
-            st.markdown(prompt)
-        # Add user message to chat history
-        st.session_state.messages.append({"role": "user", "content": prompt})
+    with col2:
+        if prompt := st.chat_input("Ask me anything based on the transcript:"):
+            with st.chat_message("user"):
+                st.markdown(prompt)
+            # Add user message to chat history
+            st.session_state.messages.append({"role": "user", "content": prompt})
 
-        # generating response
-        engineered_prompt = retrieve(prompt)
-        if engineered_prompt:
-            response = gpt(engineered_prompt)
-            with st.chat_message("assistant"):
-                st.markdown(response)
-            st.session_state.messages.append({"role": "assistant", "content": response})
-        else:
-            st.markdown("Error occured, please try again.")
-            st.session_state.messages.append({"role": "error", "content": "Error occured, please try again."})
-    
-    if st.button("Reset Index"):
-        reset_index()
+            # generating response
+            engineered_prompt = retrieve(prompt)
+            if engineered_prompt:
+                response = gpt(engineered_prompt)
+                with st.chat_message("assistant"):
+                    st.markdown(response)
+                st.session_state.messages.append({"role": "assistant", "content": response})
+            else:
+                st.markdown("Error occured, please try again.")
+                st.session_state.messages.append({"role": "error", "content": "Error occured, please try again."})
+        
+        if st.button("Reset Index"):
+            reset_index()
