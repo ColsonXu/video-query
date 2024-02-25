@@ -26,7 +26,7 @@ test_embedding = llm.embeddings.create(
     model=EMBED_MODEL
 )
 
-index_name = "video-query"
+index_name = "vquery"
 if index_name not in pc.list_indexes().names():
     pc.create_index(
         name=index_name,
@@ -81,7 +81,7 @@ def _create_sentence_chunks_fixed(text, window, stride):
 
     return chunks
 
-def _upsert(index, data):
+def _upsert(index, namespace, data):
     batch_size = 100
     for i in tqdm(range(0, len(data), batch_size)):
         i_end = min(len(data), i+batch_size)
@@ -110,31 +110,34 @@ def _upsert(index, data):
         to_upsert = list(zip(ids_batch, embeds, meta_batch))
         
         # Upsert to Pinecone
-        index.upsert(vectors=to_upsert)
+        index.upsert(vectors=to_upsert, namespace=namespace)
 
 
-def create_embeddings(transcript):
+def create_embeddings(transcript, namespace):
     chunks = _create_sentence_chunks_re(transcript, SENTENCE_WINDOW, SENTENCE_STRIDE)
     if len(chunks) == 1 and len(transcript) > 10000:
         chunks = _create_sentence_chunks_fixed(transcript, WORDS_WINDOW, WORDS_STRIDE)
     print(chunks)
-    _upsert(index, chunks)
+    _upsert(index, namespace, chunks)
 
 
 limit = 3750
-def retrieve(query):
+def retrieve(query, namespace):
     res = llm.embeddings.create(
         input=[query],
         model=EMBED_MODEL
     )
 
     xq = res.data[0].embedding
-    res = index.query(vector=xq, top_k=3, include_metadata=True)
-    if not res:
-        return None
+    res = index.query(vector=xq, top_k=3, include_metadata=True, namespace=namespace)
+
     contexts = [
         x.metadata['text'] for x in res.matches
     ]
+
+    if len(contexts) == 0:
+        print(res)
+        return None
 
     prompt_start = (
         "Answer the question based on the context below.\n\n" +
@@ -145,7 +148,7 @@ def retrieve(query):
     )
 
     # append contexts until hitting limit
-    for i in range(1, len(contexts)):
+    for i in range(len(contexts)):
         if len("\n\n---\n\n".join(contexts[:i])) >= limit:
             prompt = (
                 prompt_start +
@@ -160,7 +163,3 @@ def retrieve(query):
                 prompt_end
             )
     return prompt
-
-
-def reset_index():
-    pc.delete_index(index_name)

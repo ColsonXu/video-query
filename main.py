@@ -1,6 +1,7 @@
 import os
 import streamlit as st
 import tempfile
+import uuid
 from transcriptor import transcribe
 from yt_caption import get_caption_from_youtube
 from embedding import create_embeddings, retrieve
@@ -46,12 +47,12 @@ def process_file_upload():
         with col1:
             uploaded_file = st.file_uploader("Upload an audio or video file.", type=assemlyai_supported_file_ext)
             if uploaded_file is not None:
-                st.write("Generating Video Transcript...")
                 with tempfile.NamedTemporaryFile(delete=False, suffix=uploaded_file.name) as tmp_file:
                     tmp_file.write(uploaded_file.getvalue())
                     temp_file_path = tmp_file.name
-                    transcript = transcribe(temp_file_path)
-                    st.session_state.transcript = transcript  # Store the transcript in session state
+                    with st.status("Generating Video Transcript..."):
+                        transcript = transcribe(temp_file_path)
+                        st.session_state.transcript = transcript  # Store the transcript in session state
 
 
 # Display the appropriate widget based on the input type
@@ -64,7 +65,7 @@ def gpt(prompt):
     res = llm.chat.completions.create(
         model='gpt-3.5-turbo',
         messages=[
-            {"role": "system", "content": "You are a helpful assistant that answers question based on the given context. If the answer cannot be found, write \"I don't know.\""},
+            {"role": "system", "content": "You are a helpful assistant that answers question based on the given video transcript. If the answer cannot be found, write \"I don't know.\""},
             {"role": "user", "content": prompt},
         ],
         temperature=0,
@@ -84,11 +85,17 @@ if 'transcript' in st.session_state and st.session_state.transcript is not None:
     with col1:
         st.write(st.session_state.transcript)
 
+    # create a uuid for this upload used for embedding creation and retrieval
+    if 'namespace' not in st.session_state or st.session_state.namespace is None:
+        st.session_state.namespace = str(uuid.uuid4())
+        print("create uuid:", st.session_state.namespace)
+
     # Create embeddings for the transcript
     if 'embeddings_created' not in st.session_state:
         with col2:
             with st.status("Creating Embeddings..."):
-                create_embeddings(st.session_state.transcript)
+                print("create embeddings:", st.session_state.namespace)
+                create_embeddings(st.session_state.transcript, st.session_state.namespace)
                 st.session_state.embeddings_created = True
 
     with col2:
@@ -99,15 +106,16 @@ if 'transcript' in st.session_state and st.session_state.transcript is not None:
             st.session_state.messages.append({"role": "user", "content": prompt})
 
             # generating response
-            engineered_prompt = retrieve(prompt)
+            print("retieval: ", st.session_state.namespace)
+            engineered_prompt = retrieve(prompt, st.session_state.namespace)
             if engineered_prompt:
                 response = gpt(engineered_prompt)
                 # with st.chat_message("assistant"):
                 #     st.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
             else:
-                st.markdown("Error occured, please try again.")
-                st.session_state.messages.append({"role": "error", "content": "Error occured, please try again."})
+                st.markdown("I don't know.")
+                st.session_state.messages.append({"role": "assistant", "content": "I don't know."})
 
 if 'messages' in st.session_state and st.session_state.messages:
     # Display chat messages from history on app rerun
