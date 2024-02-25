@@ -1,5 +1,7 @@
 # video-query
 
+DEMO (might not work right now, but the app works locally): https://vquery.streamlit.app/
+
 ## Inspiration
 As a student and avid self-learner, I often watch a lot of videos to gain new knowledge. Video is a great medium for knowledge because humans are visual learners. However, it is a tedious job when I want to review those concepts or find some specific detail in a 2-hour long lecture recording. Before vQuery, there is no way to interactively search a video file using natural language.
 
