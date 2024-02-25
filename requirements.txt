@@ -1,5 +1,5 @@
 openai
 assemblyai
 youtube_transcript_api
-pinecone
+pinecone-client
 tqdm
