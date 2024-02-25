@@ -3,7 +3,7 @@ import streamlit as st
 import tempfile
 from transcriptor import transcribe
 from yt_caption import get_caption_from_youtube
-from embedding import create_embeddings, retrieve, reset_index
+from embedding import create_embeddings, retrieve
 from openai import OpenAI
 
 llm = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
@@ -86,18 +86,15 @@ if 'transcript' in st.session_state and st.session_state.transcript is not None:
 
     # Create embeddings for the transcript
     if 'embeddings_created' not in st.session_state:
-        with st.spinner("Creating Embeddings..."):
-            create_embeddings(st.session_state.transcript)
-            st.session_state.embeddings_created = True
-    
-    with col1:
-        if st.button("Reset Index"):
-            reset_index()
+        with col2:
+            with st.status("Creating Embeddings..."):
+                create_embeddings(st.session_state.transcript)
+                st.session_state.embeddings_created = True
 
     with col2:
         if prompt := st.chat_input("Ask me anything based on the transcript:"):
-            with st.chat_message("user"):
-                st.markdown(prompt)
+            # with st.chat_message("user"):
+            #     st.markdown(prompt)
             # Add user message to chat history
             st.session_state.messages.append({"role": "user", "content": prompt})
 
@@ -105,16 +102,16 @@ if 'transcript' in st.session_state and st.session_state.transcript is not None:
             engineered_prompt = retrieve(prompt)
             if engineered_prompt:
                 response = gpt(engineered_prompt)
-                with st.chat_message("assistant"):
-                    st.markdown(response)
+                # with st.chat_message("assistant"):
+                #     st.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
             else:
                 st.markdown("Error occured, please try again.")
                 st.session_state.messages.append({"role": "error", "content": "Error occured, please try again."})
 
-# if 'messages' in st.session_state and st.session_state.messages:
-#     # Display chat messages from history on app rerun
-#     with col2:
-#         for message in st.session_state.messages:
-#             with st.chat_message(message["role"]):
-#                 st.markdown(message["content"])
+if 'messages' in st.session_state and st.session_state.messages:
+    # Display chat messages from history on app rerun
+    with col2:
+        for message in st.session_state.messages[::-1]:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
