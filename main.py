@@ -21,7 +21,8 @@ assemlyai_supported_file_ext = [
 ]
 
 # Radio button to select input type
-input_type = st.radio('Select input type:', ('YouTube URL', 'File Upload'))
+with col1:
+    input_type = st.radio('Select input type:', ('YouTube URL', 'File Upload'))
 
 # Function to process text input
 def process_text_input():
@@ -59,12 +60,6 @@ if input_type == 'YouTube URL':
 elif input_type == 'File Upload':
     process_file_upload()
 
-if 'messages' in st.session_state and st.session_state.messages:
-    # Display chat messages from history on app rerun
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-
 def gpt(prompt):
     res = llm.chat.completions.create(
         model='gpt-3.5-turbo',
@@ -94,6 +89,10 @@ if 'transcript' in st.session_state and st.session_state.transcript is not None:
         with st.spinner("Creating Embeddings..."):
             create_embeddings(st.session_state.transcript)
             st.session_state.embeddings_created = True
+    
+    with col1:
+        if st.button("Reset Index"):
+            reset_index()
 
     with col2:
         if prompt := st.chat_input("Ask me anything based on the transcript:"):
@@ -112,6 +111,10 @@ if 'transcript' in st.session_state and st.session_state.transcript is not None:
             else:
                 st.markdown("Error occured, please try again.")
                 st.session_state.messages.append({"role": "error", "content": "Error occured, please try again."})
-        
-        if st.button("Reset Index"):
-            reset_index()
+
+# if 'messages' in st.session_state and st.session_state.messages:
+#     # Display chat messages from history on app rerun
+#     with col2:
+#         for message in st.session_state.messages:
+#             with st.chat_message(message["role"]):
+#                 st.markdown(message["content"])
