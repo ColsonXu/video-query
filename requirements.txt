@@ -4,4 +4,4 @@ assemblyai
 youtube_transcript_api
 pinecone-client >= 3.1.0
 tqdm
-dotenv
+python-dotenv
