@@ -6,8 +6,11 @@ from transcriptor import transcribe
 from yt_caption import get_caption_from_youtube
 from embedding import create_embeddings, retrieve
 from openai import OpenAI
+from dotenv import load_dotenv
 
-llm = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+load_dotenv()
+
+llm = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 st.set_page_config(layout="wide")
 st.title("vQuery")
@@ -23,7 +26,7 @@ assemlyai_supported_file_ext = [
 
 # Radio button to select input type
 with col1:
-    input_type = st.radio('Select input type:', ('YouTube URL', 'File Upload'))
+    input_type = st.radio('Select input type:', ('YouTube URL', 'Media Upload', 'Text File Upload'))
 
 # Function to process text input
 def process_text_input():
@@ -41,12 +44,12 @@ def process_text_input():
                 else:
                     st.warning("Please enter some text.")
 
-# Function to process file upload
-def process_file_upload():
+# Function to process media file upload
+def process_media_upload():
     if 'transcript' not in st.session_state or st.session_state.transcript is None:
         with col1:
-            uploaded_file = st.file_uploader("Upload an audio or video file.", type=assemlyai_supported_file_ext)
-            if uploaded_file is not None:
+            uploaded_file = st.file_uploader("Upload an audio or video file.", type=assemlyai_supported_file_ext, accept_multiple_files=False)
+            if uploaded_file:
                 with tempfile.NamedTemporaryFile(delete=False, suffix=uploaded_file.name) as tmp_file:
                     tmp_file.write(uploaded_file.getvalue())
                     temp_file_path = tmp_file.name
@@ -54,12 +57,26 @@ def process_file_upload():
                         transcript = transcribe(temp_file_path)
                         st.session_state.transcript = transcript  # Store the transcript in session state
 
+# Function to process text file upload
+def process_text_upload():
+    if 'transcript' not in st.session_state or st.session_state.transcript is None:
+        with col1:
+            uploaded_files = st.file_uploader("Upload text files.", type="txt", accept_multiple_files=True)
+            if uploaded_files:
+                texts = []
+                for file in uploaded_files:
+                    texts.append(file.getvalue().decode("utf-8"))
+                combined_text = "\n\n".join(texts)
+                print(combined_text)
+                st.session_state.transcript = combined_text # Store the transcript in session state
 
 # Display the appropriate widget based on the input type
 if input_type == 'YouTube URL':
     process_text_input()
-elif input_type == 'File Upload':
-    process_file_upload()
+elif input_type == 'Media Upload':
+    process_media_upload()
+elif input_type == 'Text File Upload':
+    process_text_upload()
 
 def gpt(prompt):
     res = llm.chat.completions.create(
@@ -82,8 +99,8 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 if 'transcript' in st.session_state and st.session_state.transcript is not None:
-    with col1:
-        st.write(st.session_state.transcript)
+    # with col1:
+    #     st.write(st.session_state.transcript)
 
     # create a uuid for this upload used for embedding creation and retrieval
     if 'namespace' not in st.session_state or st.session_state.namespace is None:

@@ -5,13 +5,16 @@ from pinecone import Pinecone, ServerlessSpec
 from tqdm.auto import tqdm
 from time import sleep
 import uuid  # To generate unique IDs for each chunk
+from dotenv import load_dotenv
 
-llm = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
-pc = Pinecone(api_key=os.environ["PINECONE_API_KEY"])
+load_dotenv()
+
+llm = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
 
 EMBED_MODEL = "text-embedding-3-small"
 
-SENTENCE_WINDOW = 20  # Number of sentences per chunk
+SENTENCE_WINDOW = 50  # Number of sentences per chunk
 SENTENCE_STRIDE = 4   # Overlap in sentences
 WORDS_WINDOW = 400    # Number of words per chunk
 WORDS_STRIDE = 80     # Overlap in words
@@ -117,7 +120,8 @@ def create_embeddings(transcript, namespace):
     chunks = _create_sentence_chunks_re(transcript, SENTENCE_WINDOW, SENTENCE_STRIDE)
     if len(chunks) == 1 and len(transcript) > 10000:
         chunks = _create_sentence_chunks_fixed(transcript, WORDS_WINDOW, WORDS_STRIDE)
-    print(chunks)
+    for chunk in chunks:
+        print(chunk, end="\n\n")
     _upsert(index, namespace, chunks)
 
 
