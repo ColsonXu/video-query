@@ -80,7 +80,7 @@ elif input_type == 'Text File Upload':
 
 def gpt(prompt):
     res = llm.chat.completions.create(
-        model='gpt-3.5-turbo',
+        model='gpt-4o-mini',
         messages=[
             {"role": "system", "content": "You are a helpful assistant that answers question based on the given video transcript. If the answer cannot be found, write \"I don't know.\""},
             {"role": "user", "content": prompt},
