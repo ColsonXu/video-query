@@ -86,11 +86,6 @@ def gpt(prompt):
             {"role": "user", "content": prompt},
         ],
         temperature=0,
-        max_tokens=400,
-        top_p=1,
-        frequency_penalty=0,
-        presence_penalty=0,
-        stop=None
     )
     return res.choices[0].message.content.strip()
 
