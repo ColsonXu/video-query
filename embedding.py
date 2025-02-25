@@ -1,7 +1,7 @@
 import re
 import os
 from openai import OpenAI
-from pinecone-client import Pinecone, ServerlessSpec
+from pinecone import Pinecone, ServerlessSpec
 from tqdm.auto import tqdm
 from time import sleep
 import uuid  # To generate unique IDs for each chunk
