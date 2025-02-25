@@ -2,6 +2,6 @@ openai
 streamlit
 assemblyai
 youtube_transcript_api
-pinecone-client >= 3.1.0
+pinecone
 tqdm
 python-dotenv
